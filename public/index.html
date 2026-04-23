@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Kaushik AI Bot</title>
+  <style>
+    body { font-family: Arial; background: #111; color: white; text-align: center; }
+    #chat { max-width: 600px; margin: auto; }
+    .msg { padding: 10px; margin: 10px; border-radius: 10px; }
+    .user { background: blue; }
+    .bot { background: gray; }
+  </style>
+</head>
+<body>
+
+<h1>🤖 Kaushik AI Bot</h1>
+
+<select id="lang">
+  <option value="en">English</option>
+  <option value="hi">Hindi</option>
+</select>
+
+<div id="chat"></div>
+
+<input id="input" placeholder="Type..." />
+<button onclick="send()">Send</button>
+<button onclick="startVoice()">🎤</button>
+
+<script>
+async function send() {
+  let input = document.getElementById("input");
+  let chat = document.getElementById("chat");
+
+  let msg = input.value;
+  let lang = document.getElementById("lang").value;
+
+  chat.innerHTML += `<div class="msg user">${msg}</div>`;
+
+  let loadingId = "load" + Date.now();
+  chat.innerHTML += `<div class="msg bot" id="${loadingId}">Typing...</div>`;
+
+  let res = await fetch("/api/chat", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({ message: msg, lang })
+  });
+
+  let data = await res.json();
+
+  let text = data.reply;
+  let i = 0;
+  let el = document.getElementById(loadingId);
+  el.innerHTML = "";
+
+  function type() {
+    if (i < text.length) {
+      el.innerHTML += text.charAt(i);
+      i++;
+      setTimeout(type, 20);
+    }
+  }
+  type();
+
+  input.value = "";
+}
+
+function startVoice() {
+  const rec = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+  rec.lang = "hi-IN";
+  rec.onresult = e => {
+    document.getElementById("input").value = e.results[0][0].transcript;
+  };
+  rec.start();
+}
+</script>
+
+</body>
+</html>
